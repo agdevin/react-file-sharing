@@ -49,3 +49,17 @@ code {
 .react-bootstrap-table table {
   table-layout: auto !important;
 }
+
+.detail-info {
+  display: flex;
+  padding: 3px 0;
+}
+
+.detail-key {
+  width: 30%;
+  padding-left: 20px;
+}
+
+.detail-value {
+  width: 70%;
+}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Tabs, Tab, Button, Modal, Form } from "react-bootstrap";
+import { Tabs, Tab, Button, Modal, Form, ListGroup } from "react-bootstrap";
 import BootstrapTable from 'react-bootstrap-table-next';
 import ToolkitProvider, { Search } from 'react-bootstrap-table2-toolkit';
 import { MdRemoveRedEye, MdDelete } from 'react-icons/md';
@@ -10,12 +10,22 @@ import emailvalid from "../../utils/emailValid";
 
 export default function List(props) {
   const memberId = 1;
-  const [showModal, setShowModal] = useState(false);
-  const handleClose = () => setShowModal(false);
   const [selectedFileId, setFileId] = useState(0);
   const [sharingMemberEmail, setSharingMemberEmail] = useState('');
   const [memberFiles, setMemberFiles] = useState([]);
   const [sharedFiles, setSharedFiles] = useState([]);
+
+  const [showModal, setShowModal] = useState(false);
+  const handleClose = () => setShowModal(false);
+
+  const [showFileDetailModal, setShowFileDetailModal] = useState(false);
+  const handleCloseFileDetailModal = () => setShowFileDetailModal(false);
+
+  const [showSharedFileDetailModal, setShowSharedFileDetailModal] = useState(false);
+  const handleCloseSharedFileDetailModal = () => setShowSharedFileDetailModal(false);
+
+  const [fileDetail, setFileDetail] = useState({});
+  const [sharedFileDetail, setSharedFileDetail] = useState({});
 
   const rankFormatter = (cell, row, rowIndex, formatExtraData) => { 
     return ( 
@@ -158,8 +168,16 @@ export default function List(props) {
     })
   }
 
-  const viewFileDetail = (id) => {
-    
+  const viewFileDetail = (fileId) => {
+    setShowFileDetailModal(true);
+    api.getFileDetails(memberId, fileId).then(res => {
+      if (res.data) {
+        setFileDetail(res.data);
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    })
   }
 
   const showShareFileModal = (id) => {
@@ -171,8 +189,16 @@ export default function List(props) {
     console.log(id);
   }
   
-  const viewSharedFileDetail = (id) => {
-    
+  const viewSharedFileDetail = (sharedKey) => {
+    setShowSharedFileDetailModal(true);
+    api.getSharedFileDetails(memberId, sharedKey).then(res => {
+      if (res.data) {
+        setSharedFileDetail(res.data);
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    })
   }
 
   const deleteSharedFile = (id) => {
@@ -206,6 +232,7 @@ export default function List(props) {
 
   return (
     <React.Fragment>
+      {/* sharing modal */}
       <Modal
         show={showModal}
         onHide={handleClose}
@@ -229,10 +256,77 @@ export default function List(props) {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* file detail modal */}
+      <Modal
+        show={showFileDetailModal}
+        onHide={handleCloseFileDetailModal}
+        backdrop="static"
+        keyboard={false}
+        animation={false}
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>File Details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ListGroup variant="flush">
+            {
+              Object.keys(fileDetail).map((key, i) => (
+                <div className="detail-info" key={i}>
+                  <div className="detail-key">
+                    <span>{(key.replace(/[^a-zA-Z ]/g, " ")).charAt(0).toUpperCase() + (key.replace(/[^a-zA-Z ]/g, " ")).slice(1)}:</span>
+                  </div>
+                  <div className="detail-value">
+                    <span>{fileDetail[key]}</span>
+                  </div>
+                </div>
+              ))
+            }
+          </ListGroup>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseFileDetailModal}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal
+        show={showSharedFileDetailModal}
+        onHide={handleCloseSharedFileDetailModal}
+        backdrop="static"
+        keyboard={false}
+        animation={false}
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Shared File Details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ListGroup variant="flush">
+            {
+              Object.keys(sharedFileDetail).map((key, i) => (
+                <div className="detail-info" key={i}>
+                  <div className="detail-key">
+                    <span>{(key.replace(/[^a-zA-Z ]/g, " ")).charAt(0).toUpperCase() + (key.replace(/[^a-zA-Z ]/g, " ")).slice(1)}:</span>
+                  </div>
+                  <div className="detail-value">
+                    <span>{sharedFileDetail[key]}</span>
+                  </div>
+                </div>
+              ))
+            }
+          </ListGroup>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseSharedFileDetailModal}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       <Tabs transition={false} defaultActiveKey="member_files" id="list-tab">
-        {/* <Alert show={showAlert} variant={alertVariant} onClose={() => setShowAlert(false)}>
-          {alertMessage}
-        </Alert> */}
         <Tab eventKey="member_files" title="Member Files">
           <ToolkitProvider
             keyField="file_id"

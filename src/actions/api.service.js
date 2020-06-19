@@ -54,3 +54,19 @@ export const getSharedFiles = (memberId) =>
     }
     return undefined;
   });
+
+export const getFileDetails = (memberId, fileId) =>
+  fetch(`${apiUrl}/cloud/files?memberId=${memberId}&fileId=${fileId}`).then((res) => {
+    if (res.ok) {
+        return res.json();
+    }
+    return undefined;
+  });
+
+export const getSharedFileDetails = (memberId, sharedKey) =>
+  fetch(`${apiUrl}/cloud/files/share?memberId=${memberId}&sharedKey=${sharedKey}`).then((res) => {
+    if (res.ok) {
+        return res.json();
+    }
+    return undefined;
+  }); 
