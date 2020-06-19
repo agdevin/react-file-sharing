@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Tabs, Tab, Button, Modal, Form, ListGroup } from "react-bootstrap";
 import BootstrapTable from 'react-bootstrap-table-next';
 import ToolkitProvider, { Search } from 'react-bootstrap-table2-toolkit';
+import paginationFactory from 'react-bootstrap-table2-paginator';
 import { MdRemoveRedEye, MdDelete } from 'react-icons/md';
 import { FaShareAlt } from 'react-icons/fa';
 
@@ -182,6 +183,7 @@ export default function List(props) {
 
   const showShareFileModal = (id) => {
     setShowModal(true);
+    setSharingMemberEmail('');
     setFileId(id);
   }
 
@@ -340,8 +342,9 @@ export default function List(props) {
                   <SearchBar { ...props.searchProps } />
                   <BootstrapTable
                     { ...props.baseProps }
-                    // rowStyle={rowStyle}
                     tdStyle={ {verticalAlign: 'middle' } }
+                    pagination={ paginationFactory() }
+                    bootstrap4={true}
                   />
                 </div>
               )
@@ -361,8 +364,9 @@ export default function List(props) {
                   <SearchBar { ...props.searchProps } />
                   <BootstrapTable
                     { ...props.baseProps }
-                    // rowStyle={rowStyle}
                     tdStyle={ {verticalAlign: 'middle' } }
+                    pagination={ paginationFactory() }
+                    bootstrap4={true}
                   />
                 </div>
               )

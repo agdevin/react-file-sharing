@@ -46,9 +46,9 @@ code {
   height: 20px;
 }
 
-.react-bootstrap-table table {
+/* .react-bootstrap-table table {
   table-layout: auto !important;
-}
+} */
 
 .detail-info {
   display: flex;
