@@ -28,6 +28,15 @@ export default function List(props) {
   const [fileDetail, setFileDetail] = useState({});
   const [sharedFileDetail, setSharedFileDetail] = useState({});
 
+  const [showRemoveShareConfirmModal, setShowRemoveShareConfirmModal] = useState(false);
+  const handleCloseRemoveShareConfirmModal = () => setShowRemoveShareConfirmModal(false);
+
+  const [showDeleteFileConfirmModal, setShowDeleteFileConfirmModal] = useState(false);
+  const handleCloseDeleteFileConfirmModal = () => setShowDeleteFileConfirmModal(false);
+
+  const [removeSharedKey, setRemoveSharedKey] = useState('');
+  const [deleteFileId, setDeleteFileId] = useState('');
+
   const rankFormatter = (cell, row, rowIndex, formatExtraData) => { 
     return ( 
       <div 
@@ -37,34 +46,39 @@ export default function List(props) {
         <Button className="action-btn" variant="primary" size="sm" onClick={() => viewFileDetail(row.file_id)}>
           <MdRemoveRedEye className="action-btn-icon" />
         </Button>
-        <Button className="action-btn" variant="success" size="sm" onClick={() => showShareFileModal(row.file_id)}>
-          <FaShareAlt className="action-btn-icon"/>
-        </Button>
-        <Button className="action-btn" variant="danger" size="sm" onClick={() => deleteFile(row.file_id)}>
-          <MdDelete className="action-btn-icon" />
-        </Button>
+        {row.status === 'available'? (
+          <React.Fragment>
+            <Button className="action-btn" variant="success" size="sm" onClick={() => showShareFileModal(row.file_id)}>
+              <FaShareAlt className="action-btn-icon"/>
+            </Button>
+            <Button className="action-btn" variant="danger" size="sm" onClick={() => popDeleteFileConfirmModal(row.file_id)}>
+              <MdDelete className="action-btn-icon" />
+            </Button>
+          </React.Fragment>
+        ) : (null)}
       </div> 
     ); 
   }
 
-  const rankFormatterSharedFile = (cell, row, rowIndex, formatExtraData) => { 
-    return ( 
-      <div 
+  const rankFormatterSharedFile = (cell, row, rowIndex, formatExtraData) => {
+    return (
+      <div
         style={{ textAlign: "center",
         cursor: "pointer",
         lineHeight: "normal" }}>
         <Button className="action-btn" variant="primary" size="sm" onClick={() => viewSharedFileDetail(row.shared_key)}>
           <MdRemoveRedEye className="action-btn-icon" />
         </Button>
-        <Button className="action-btn" variant="danger" size="sm" onClick={() => deleteSharedFile(row.shared_key)}>
+        <Button className="action-btn" variant="danger" size="sm" onClick={() => popRemoveSharingConfirmModal(row.shared_key)}>
           <MdDelete className="action-btn-icon" />
         </Button>
-      </div> 
-    ); 
+      </div>
+    );
   }
 
   const { SearchBar } = Search;
 
+  // member files table columns
   const memberFilesColumns = [{
     dataField: 'file_id',
     text: 'File ID',
@@ -107,6 +121,7 @@ export default function List(props) {
     formatter: rankFormatter,
   }];
 
+  // shared files table columns
   const sharedFilesColumns = [{
     dataField: 'shared_key',
     // text: 'File ID',
@@ -147,18 +162,22 @@ export default function List(props) {
 
   // fetch files for member files
   React.useEffect(() => {
-    api.getMemberFiles(memberId).then(res => {
-      setMemberFiles(res.data);
-    })
-    .catch(error => {
-      console.log(error);
-    })
+    getMemberFiles(memberId);
   }, [])
 
   // fetch shared files
   React.useEffect(() => {
     getSharedFiles(memberId);
   }, [])
+
+  const getMemberFiles = (memberId) => {
+    api.getMemberFiles(memberId).then(res => {
+      setMemberFiles(res.data);
+    })
+    .catch(error => {
+      console.log(error);
+    })
+  }
 
   const getSharedFiles = (memberId) => {
     api.getSharedFiles(memberId).then(res => {
@@ -169,6 +188,7 @@ export default function List(props) {
     })
   }
 
+  // view file detail with modal
   const viewFileDetail = (fileId) => {
     setShowFileDetailModal(true);
     api.getFileDetails(memberId, fileId).then(res => {
@@ -181,16 +201,20 @@ export default function List(props) {
     })
   }
 
-  const showShareFileModal = (id) => {
+  // show share file modal
+  const showShareFileModal = (fileId) => {
     setShowModal(true);
     setSharingMemberEmail('');
-    setFileId(id);
+    setFileId(fileId);
   }
 
-  const deleteFile = (id) => {
-    console.log(id);
+  // show file deletion confirm modal
+  const popDeleteFileConfirmModal = (fileId) => {
+    setDeleteFileId(fileId);
+    setShowDeleteFileConfirmModal(true);
   }
   
+  // view shared file details with modal
   const viewSharedFileDetail = (sharedKey) => {
     setShowSharedFileDetailModal(true);
     api.getSharedFileDetails(memberId, sharedKey).then(res => {
@@ -203,10 +227,7 @@ export default function List(props) {
     })
   }
 
-  const deleteSharedFile = (id) => {
-    console.log(id);
-  }
-
+  // list member files with table
   const shareFilewithMember = (e) => {
     e.preventDefault();
     if (sharingMemberEmail) {
@@ -225,11 +246,52 @@ export default function List(props) {
           setShowModal(false);
         })
       } else {
-        alert('Email is not valid')
+        alert('Email is not valid');
       }
     } else {
-      alert('Email field should not empty')
+      alert('Email field should not empty');
     }
+  }
+
+  // show remove sharing confirm modal
+  const popRemoveSharingConfirmModal = (sharedKey) => {
+    setRemoveSharedKey(sharedKey);
+    setShowRemoveShareConfirmModal(true);
+  }
+
+  // processing of remove sharing with api
+  const removeSharingProcess = (event) => {
+    event.preventDefault();
+    api.removeSharing(removeSharedKey).then(res => {
+      if (res) {
+        alert(res.message);
+        setShowRemoveShareConfirmModal(false);
+        getSharedFiles(memberId);
+      }
+    })
+    .catch(error => {
+      console.log(error);
+      alert('Something Went Wrong');
+      setShowRemoveShareConfirmModal(false);
+    })
+  }
+
+  // processing of delete file with api
+  const deleteFileProcess = (event) => {
+    event.preventDefault();
+    api.deleteFile(deleteFileId).then(res => {
+      if (res) {
+        alert(res.message);
+        setShowDeleteFileConfirmModal(false);
+        getMemberFiles(memberId);
+        getSharedFiles(memberId);
+      }
+    })
+    .catch(error => {
+      console.log(error);
+      alert('Something Went Wrong');
+      setShowDeleteFileConfirmModal(false);
+    })
   }
 
   return (
@@ -238,8 +300,6 @@ export default function List(props) {
       <Modal
         show={showModal}
         onHide={handleClose}
-        backdrop="static"
-        keyboard={false}
         animation={false}
       >
         <Modal.Header closeButton>
@@ -263,8 +323,6 @@ export default function List(props) {
       <Modal
         show={showFileDetailModal}
         onHide={handleCloseFileDetailModal}
-        backdrop="static"
-        keyboard={false}
         animation={false}
         size="lg"
       >
@@ -293,12 +351,11 @@ export default function List(props) {
           </Button>
         </Modal.Footer>
       </Modal>
-
+      
+      {/* Shared File Detail Modal */}
       <Modal
         show={showSharedFileDetailModal}
         onHide={handleCloseSharedFileDetailModal}
-        backdrop="static"
-        keyboard={false}
         animation={false}
         size="lg"
       >
@@ -329,6 +386,7 @@ export default function List(props) {
       </Modal>
 
       <Tabs transition={false} defaultActiveKey="member_files" id="list-tab">
+        {/* Member Files Tab */}
         <Tab eventKey="member_files" title="Member Files">
           <ToolkitProvider
             keyField="file_id"
@@ -351,6 +409,9 @@ export default function List(props) {
             }
           </ToolkitProvider>
         </Tab>
+        {/* End Member Files Tab */}
+
+        {/* Shared Files Tab */}
         <Tab eventKey="shared_file" title="Shared File">
           <ToolkitProvider
             keyField="shared_key"
@@ -374,6 +435,42 @@ export default function List(props) {
           </ToolkitProvider>
         </Tab>
       </Tabs>
+      {/* End Shared Files Tab */}
+
+      {/* Delete File Confimation Modal */}
+      <Modal show={showDeleteFileConfirmModal} onHide={handleCloseDeleteFileConfirmModal} animation={false}>
+        <Modal.Header closeButton>
+          <Modal.Title>Remove Sharing</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <p>Are you sure you want to remove this sharing?</p>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseDeleteFileConfirmModal}>Cancel</Button>
+          <Button variant="danger" onClick={(e) => deleteFileProcess(e)}>Confirm Remove</Button>
+        </Modal.Footer>
+      </Modal>
+      {/* End Delete File Confimation Modal */}
+
+      {/* Remove Sharing Confimation Modal */}
+      <Modal show={showRemoveShareConfirmModal} onHide={handleCloseRemoveShareConfirmModal} animation={false}>
+        <Modal.Header closeButton>
+          <Modal.Title>Remove Sharing</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <p>Are you sure you want to remove this sharing?</p>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseRemoveShareConfirmModal}>Cancel</Button>
+          <Button variant="danger" onClick={(e) => removeSharingProcess(e)}>Confirm Remove</Button>
+        </Modal.Footer>
+      </Modal>
+      {/* End Remove Sharing Confimation Modal */}
+
     </React.Fragment>
   )
 }

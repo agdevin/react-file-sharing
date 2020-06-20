@@ -25,6 +25,14 @@ export const getMemberFiles = (memberId) =>
     return undefined;
   });
 
+export const getFileDetails = (memberId, fileId) =>
+  fetch(`${apiUrl}/cloud/files/details/${fileId}?memberId=${memberId}`).then((res) => {
+    if (res.ok) {
+        return res.json();
+    }
+    return undefined;
+  });
+
 export const shareFile = (fileId, memberId, sharingMemberEmail) =>
   fetch(`${apiUrl}/cloud/files/share`, {
     method: "POST",
@@ -55,18 +63,50 @@ export const getSharedFiles = (memberId) =>
     return undefined;
   });
 
-export const getFileDetails = (memberId, fileId) =>
-  fetch(`${apiUrl}/cloud/files?memberId=${memberId}&fileId=${fileId}`).then((res) => {
+export const getSharedFileDetails = (memberId, sharedKey) =>
+  fetch(`${apiUrl}/cloud/files/share/details/${sharedKey}?memberId=${memberId}`).then((res) => {
     if (res.ok) {
         return res.json();
     }
     return undefined;
   });
 
-export const getSharedFileDetails = (memberId, sharedKey) =>
-  fetch(`${apiUrl}/cloud/files/share?memberId=${memberId}&sharedKey=${sharedKey}`).then((res) => {
+export const deleteFile = (fileId) =>
+  fetch(`${apiUrl}/cloud/files`, {
+    method: "DELETE",
+      headers: {
+      "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fileId: fileId
+      }),
+  }).then((res) => {
     if (res.ok) {
-        return res.json();
+      return res.json();
+    } else {
+      console.log('Failed.')
+      let error = new Error(res.statusText)
+      error.res = res
+      return Promise.reject(error)
     }
-    return undefined;
-  }); 
+  });
+
+export const removeSharing = (sharedKey) =>
+  fetch(`${apiUrl}/cloud/files/share`, {
+    method: "DELETE",
+      headers: {
+      "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sharedKey: sharedKey
+      }),
+  }).then((res) => {
+    if (res.ok) {
+      return res.json();
+    } else {
+      console.log('Failed.')
+      let error = new Error(res.statusText)
+      error.res = res
+      return Promise.reject(error)
+    }
+  });
